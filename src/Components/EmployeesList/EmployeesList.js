@@ -4,6 +4,8 @@ import axiosInstance from "../../axiosConfig";
 import { Box, Button, Grid, Modal, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from "@mui/material";
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
+import Alert from '@mui/material/Alert';
+import Snackbar from '@mui/material/Snackbar';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import FormControl from '@mui/material/FormControl';
 import { DataGrid } from '@mui/x-data-grid';
@@ -17,7 +19,8 @@ import { GetAllDepartments } from "../../API/Departments";
 const EmployeesList = () => {
 
     const [openModalEmployee, setOpenModalEmployee] = useState(false);
-
+    const [error, setError] = useState(null);
+    const [success, setSuccess] = useState(null);
     const [employees, setEmployees] = useState([]);
     const [departments, setDepartments] = useState(null);
     const [selectedEmployee, setSelectedEmployee] = useState({
@@ -37,9 +40,6 @@ const EmployeesList = () => {
         populateDepartmentsData();
     }, [])
 
-    //useEffect(() => {
-    //    renderEmployeesTable(employees);
-    //}, [employees])
 
     const populateEmployeesData = async () => {
         setLoading(true);
@@ -55,25 +55,48 @@ const EmployeesList = () => {
         setLoading(false);
     };
 
+    const validateForm = () => {
+        if (selectedEmployee.name === null || selectedEmployee.name === '') {
+            setError('Name is required');
+            return false;
+        }
+        if (selectedEmployee.jobTitle === null || selectedEmployee.jobTitle === '') {
+            setError('Job title is required');
+            return false;
+        }
+        if (selectedEmployee.salary === null || selectedEmployee.salary === '') {
+            setError('Salary is required');
+            return false;
+        }
+        if (selectedEmployee.departmentId === null || selectedEmployee.departmentId === '') {
+            setError('Department is required');
+            return false;
+        }
+        if (selectedEmployee.hireDate === null || selectedEmployee.hireDate === '') {
+            setError('Hire date is required');
+            return false;
+        }
+        return true;
+    }
+
     const submitEmployeeForm = async () => {
-        console.log('Save employee clicked');
+        if (!validateForm()) {
+            return;
+        }
+
         if (selectedEmployee.id != null) {
             //Update employee
-            console.log('Update employee');
             const response = await UpdateEmployee(selectedEmployee);
-            console.log(response);
             if (response.status === 201) {
-                console.log('Employee updated successfully');
+                setSuccess('Employee updated successfully');
                 setOpenModalEmployee(false);
                 populateEmployeesData();
             }
         } else {
             //Add employee
-            console.log('Add employee');
             const response = await AddEmployee(selectedEmployee);
-            console.log(response);
             if (response.status === 201) {
-                console.log('Employee added successfully');
+                setSuccess('Employee added successfully');
                 setOpenModalEmployee(false);
                 populateEmployeesData();
             }
@@ -251,7 +274,23 @@ const EmployeesList = () => {
                     </Button>
                 </FormControl>
                 </Box>
-            </Modal>
+        </Modal>
+
+
+    let errorAlert = 
+        <Snackbar open={error !== null} autoHideDuration={6000} onClose={() => setError(null)}>
+            <Alert severity="error" sx={{ width: '100%' }}>
+                {error}
+            </Alert>
+        </Snackbar>
+
+    let successAlert =
+        <Snackbar open={success !== null} autoHideDuration={6000} onClose={() => setSuccess(null)}>
+            <Alert severity="success" sx={{ width: '100%' }}>
+                {success}
+            </Alert>
+        </Snackbar>
+
 
     let contents = loading
         ? <p><em>Loading... Please refresh once the ASP.NET backend has started. See <a href="https://aka.ms/jspsintegrationreact">https://aka.ms/jspsintegrationreact</a> for more details.</em></p>
@@ -267,6 +306,8 @@ const EmployeesList = () => {
                 Add new employee
             </Button>
             {contents}
+            {errorAlert}
+            {successAlert}
         </div>
     )
 
