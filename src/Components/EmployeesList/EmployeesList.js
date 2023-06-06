@@ -1,12 +1,17 @@
-import {Component, useEffect, useState} from "react";
+import { Component, useEffect, useState } from "react";
+import dayjs from 'dayjs';
 import axiosInstance from "../../axiosConfig";
-import { Box, Grid, Modal, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from "@mui/material";
+import { Box, Button, Grid, Modal, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from "@mui/material";
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import FormControl from '@mui/material/FormControl';
 import { DataGrid } from '@mui/x-data-grid';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import moment from "moment";
+import { GetAllEmployees, AddEmployee, UpdateEmployee } from "../../API/Employee";
 import { GetAllDepartments } from "../../API/Departments";
 
 const EmployeesList = () => {
@@ -32,12 +37,49 @@ const EmployeesList = () => {
         populateDepartmentsData();
     }, [])
 
+    //useEffect(() => {
+    //    renderEmployeesTable(employees);
+    //}, [employees])
+
+    const populateEmployeesData = async () => {
+        setLoading(true);
+        const response = await GetAllEmployees();
+        setEmployees(response.data);
+        setLoading(false);
+    };
+
     const populateDepartmentsData = async () => {
         setLoading(true);
         const response = await GetAllDepartments();
         setDepartments(response.data);
         setLoading(false);
     };
+
+    const submitEmployeeForm = async () => {
+        console.log('Save employee clicked');
+        if (selectedEmployee.id != null) {
+            //Update employee
+            console.log('Update employee');
+            const response = await UpdateEmployee(selectedEmployee);
+            console.log(response);
+            if (response.status === 201) {
+                console.log('Employee updated successfully');
+                setOpenModalEmployee(false);
+                populateEmployeesData();
+            }
+        } else {
+            //Add employee
+            console.log('Add employee');
+            const response = await AddEmployee(selectedEmployee);
+            console.log(response);
+            if (response.status === 201) {
+                console.log('Employee added successfully');
+                setOpenModalEmployee(false);
+                populateEmployeesData();
+            }
+        }
+    }
+            
 
     //Definition of our datatable columns
     const columnsTest = [
@@ -58,24 +100,10 @@ const EmployeesList = () => {
         {
             field: 'department', headerName: 'Department', flex: 1,
             valueGetter: (params) => {
-                return departments.find(d => d.id === params.row.departmentId).name;
+                return departments && departments.find(d => d.id === params.row.departmentId).name;
             }
         },
     ];
-
-    const populateEmployeesData = () => {
-        setLoading(true);
-        axiosInstance.get('api/employee')
-            .then((response) => {
-                setEmployees(response.data);
-                setLoading(false);
-
-            })
-            .catch((error) => {
-                console.log(error);
-                setLoading(false);
-            });
-    };
 
     const renderEmployeesTable = (employees) => {
         return (
@@ -129,6 +157,25 @@ const EmployeesList = () => {
         marginTop: '5%',
     }
 
+    const resetSelectedEmployeeData = () => {
+        setSelectedEmployee({
+            id: null,
+            name: null,
+            jobTitle: null,
+            managerId: null,
+            salary: null,
+            commission: null,
+            departmentId: null,
+            hireDate: null,
+        });
+    }
+
+    const handleNewEmployeeClick = () => {
+        setOpenModalEmployee(true);
+        resetSelectedEmployeeData();
+    }
+
+
 
     let modalEditEmployee = !loading && selectedEmployee &&
             <Modal
@@ -138,11 +185,25 @@ const EmployeesList = () => {
                 aria-describedby="modal-modal-description"
             >
             <Box sx={style}>
-                <Typography id="modal-modal-title" variant="h6" component="h2" style={{ width: '100%', textAlign: 'center' }}>
-                    {selectedEmployee.name}#{selectedEmployee.id}
-                </Typography>
+                {selectedEmployee.id && (
+                    <Typography id="modal-modal-title" style={{ width: '100%', textAlign: 'left', fontSize: '12px', color: 'grey' }}>
+                        Ref: {selectedEmployee.id}
+                    </Typography>
+                )}
                 <FormControl fullWidth sx={styleInput}>
-                    <TextField label="Job title" variant="outlined" value={selectedEmployee.jobTitle}/>
+                    <TextField label="Name" variant="outlined" value={selectedEmployee.name} onChange={(e) => setSelectedEmployee({...selectedEmployee, name: e.target.value})} />
+                </FormControl>
+                <FormControl fullWidth sx={styleInput}>
+                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                        <DatePicker
+                            label="Hire date"
+                            value={dayjs(selectedEmployee.hireDate)}
+                            onChange={(newValue) => setSelectedEmployee({ ...selectedEmployee, hireDate: newValue })}
+                        />
+                    </LocalizationProvider>
+                </FormControl>
+                <FormControl fullWidth sx={styleInput}>
+                    <TextField label="Job title" variant="outlined" value={selectedEmployee.jobTitle} onChange={(e) => setSelectedEmployee({ ...selectedEmployee, jobTitle: e.target.value })} />
                 </FormControl>
                 <FormControl fullWidth sx={styleInput}>
                     <InputLabel id="modal-manager-label">Manager</InputLabel>
@@ -151,6 +212,7 @@ const EmployeesList = () => {
                         id="modal-manager-label"
                         value={selectedEmployee.managerId}
                         label="Manager"
+                        onChange={(e) => setSelectedEmployee({...selectedEmployee, managerId: e.target.value})}
                     >
                         {
                             employees && employees.map((employee) => {
@@ -161,10 +223,10 @@ const EmployeesList = () => {
                     </Select>
                 </FormControl>
                 <FormControl fullWidth sx={styleInput}>
-                    <TextField label="Salary" variant="outlined" value={selectedEmployee.salary}/>
+                    <TextField label="Salary" variant="outlined" value={selectedEmployee.salary} onChange={(e) => setSelectedEmployee({ ...selectedEmployee, salary: e.target.value })} />
                 </FormControl>
                 <FormControl fullWidth sx={styleInput}>
-                    <TextField label="Commision" variant="outlined" value={selectedEmployee.commission}/>
+                    <TextField label="Commision" variant="outlined" value={selectedEmployee.commission} onChange={(e) => setSelectedEmployee({ ...selectedEmployee, commission: e.target.value })} />
                 </FormControl>
                 <FormControl fullWidth sx={styleInput}>
                     <InputLabel id="modal-department-label">Department</InputLabel>
@@ -173,6 +235,7 @@ const EmployeesList = () => {
                         id="modal-department-select"
                         value={selectedEmployee.departmentId}
                         label="Department"
+                        onChange={(e) => setSelectedEmployee({...selectedEmployee, departmentId: e.target.value})}
                     >
                         {
                             departments && departments.map((department) => {
@@ -181,6 +244,11 @@ const EmployeesList = () => {
                             })
                         }
                     </Select>
+                </FormControl>
+                <FormControl fullWidth sx={styleInput}>
+                    <Button variant="contained" color="primary" onClick={() => submitEmployeeForm()}>
+                       Save
+                    </Button>
                 </FormControl>
                 </Box>
             </Modal>
@@ -195,6 +263,9 @@ const EmployeesList = () => {
             <h1 id="tabelLabel" >Employees List</h1>
             <p>This component demonstrates fetching data from the server.</p>
             {modalEditEmployee}
+            <Button variant="contained" color="primary" onClick={() => handleNewEmployeeClick()} sx={{marginBottom: '1%', textAlign: 'right'}}>
+                Add new employee
+            </Button>
             {contents}
         </div>
     )

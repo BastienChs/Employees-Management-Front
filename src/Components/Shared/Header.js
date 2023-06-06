@@ -1,5 +1,7 @@
 import {Component} from "react";
-import {AppBar, Box, Button, IconButton, Toolbar, Typography} from "@mui/material";
+import { AppBar, Box, Button, IconButton, Toolbar, Typography } from "@mui/material";
+import Breadcrumbs from '@mui/material/Breadcrumbs';
+import Link from '@mui/material/Link';
 import {Menu as MenuIcon} from "@mui/icons-material";
 class Header extends Component{
     render() {
@@ -22,6 +24,19 @@ class Header extends Component{
                         <Button color="inherit">Login</Button>
                     </Toolbar>
                 </AppBar>
+                <Breadcrumbs aria-label="breadcrumb">
+                    <Link underline="hover" color="inherit" href="/">
+                        MUI
+                    </Link>
+                    <Link
+                        underline="hover"
+                        color="inherit"
+                        href="/material-ui/getting-started/installation/"
+                    >
+                        Core
+                    </Link>
+                    <Typography color="text.primary">Breadcrumbs</Typography>
+                </Breadcrumbs>
             </Box>
         );
     }
