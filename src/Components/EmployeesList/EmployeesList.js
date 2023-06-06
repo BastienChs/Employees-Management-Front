@@ -15,7 +15,16 @@ const EmployeesList = () => {
 
     const [employees, setEmployees] = useState([]);
     const [departments, setDepartments] = useState(null);
-    const [selectedEmployee, setSelectedEmployee] = useState(null); // [id, name, manager, hireDate]
+    const [selectedEmployee, setSelectedEmployee] = useState({
+        id: null,
+        name: null,
+        jobTitle: null,
+        managerId: null,
+        salary: null,
+        commission: null,
+        departmentId: null,
+        hireDate: null,
+    }); // [id, name, manager, hireDate]
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
@@ -84,13 +93,23 @@ const EmployeesList = () => {
     }
 
     const handleRowClick: GridEventListener<'rowClick'> = (params) => {
+        console.log(params);
         setOpenModalEmployee(true);
 
         //We want to assign the selected employee to the state when the row is clicked, we have the id of the row in params.id, so we can find the employee in the employees array
         let employee = employees.find(e => e.id === params.id);
         console.log(employee);
-        setSelectedEmployee(employee);
-
+        //setSelectedEmployee(employee);
+        setSelectedEmployee({
+            id: employee.id,
+            name: employee.name,
+            jobTitle: employee.jobTitle,
+            managerId: employee.managerId,
+            salary: employee.salary,
+            commission: employee.commission,
+            departmentId: employee.departmentId,
+            hireDate: employee.hireDate,
+        });
         console.log('ID of the row clicked: ', params.id);
     };
 
@@ -130,19 +149,22 @@ const EmployeesList = () => {
                     <Select
                         labelId="modal-manager-label"
                         id="modal-manager-label"
-                        value={selectedEmployee.manager.id}
+                        value={selectedEmployee.managerId}
                         label="Manager"
                     >
-                        <MenuItem value={10}>Ten</MenuItem>
-                        <MenuItem value={20}>Twenty</MenuItem>
-                        <MenuItem value={30}>Thirty</MenuItem>
+                        {
+                            employees && employees.map((employee) => {
+                                return <MenuItem value={employee.id}
+                                    key={employee.id}>{employee.name}</MenuItem>
+                            })
+                        }
                     </Select>
                 </FormControl>
                 <FormControl fullWidth sx={styleInput}>
                     <TextField label="Salary" variant="outlined" value={selectedEmployee.salary}/>
                 </FormControl>
                 <FormControl fullWidth sx={styleInput}>
-                    <TextField label="Commision" variant="outlined" value={selectedEmployee.comm}/>
+                    <TextField label="Commision" variant="outlined" value={selectedEmployee.commission}/>
                 </FormControl>
                 <FormControl fullWidth sx={styleInput}>
                     <InputLabel id="modal-department-label">Department</InputLabel>
@@ -152,9 +174,12 @@ const EmployeesList = () => {
                         value={selectedEmployee.departmentId}
                         label="Department"
                     >
-                        <MenuItem value={10}>Ten</MenuItem>
-                        <MenuItem value={20}>Twenty</MenuItem>
-                        <MenuItem value={30}>Thirty</MenuItem>
+                        {
+                            departments && departments.map((department) => {
+                                return <MenuItem value={department.id}
+                                    key={department.id}>{department.name}</MenuItem>
+                            })
+                        }
                     </Select>
                 </FormControl>
                 </Box>
