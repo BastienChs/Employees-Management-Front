@@ -1,13 +1,16 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
-import App from './App';
+import EmployeesList from './Components/EmployeesList/EmployeesList';
 import reportWebVitals from './reportWebVitals';
+import Wrapper from "./Components/Shared/Wrapper";
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-    <App />
+        <Wrapper>
+            <EmployeesList/>
+        </Wrapper>
   </React.StrictMode>
 );
 
