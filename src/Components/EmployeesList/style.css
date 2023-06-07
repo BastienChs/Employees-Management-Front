@@ -1,0 +1,16 @@
+.employee-datagrid-header{
+    background-color: #f5f5f5;
+    border: 1px solid #ddd;
+    font-weight: bold;
+    font-size: 16px;
+    color: #000;
+}
+.shared-datagrid-column{
+    border: 1px solid #ddd;
+    font-size: 16px;
+    color: #000;
+}
+.manager-datagrid-column{
+    /*We want a color slightly different to highlight it*/
+    background-color: #f0f0f0;
+}

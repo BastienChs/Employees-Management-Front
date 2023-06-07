@@ -1,7 +1,22 @@
 import { Component, useEffect, useState } from "react";
 import dayjs from 'dayjs';
 import axiosInstance from "../../axiosConfig";
-import { Box, Button, Grid, Modal, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from "@mui/material";
+import {
+    Box,
+    Button,
+    CircularProgress,
+    Grid,
+    Modal,
+    Paper,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
+    TextField,
+    Typography
+} from "@mui/material";
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import Alert from '@mui/material/Alert';
@@ -15,13 +30,17 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import moment from "moment";
 import { GetAllEmployees, AddEmployee, UpdateEmployee } from "../../API/Employee";
 import { GetAllDepartments } from "../../API/Departments";
+import './style.css';
 
 const EmployeesList = () => {
 
     const [openModalEmployee, setOpenModalEmployee] = useState(false);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
+    const [search, setSearch] = useState('');
+
     const [employees, setEmployees] = useState([]);
+    const [employeesFiltered, setEmployeesFiltered] = useState([]);
     const [departments, setDepartments] = useState(null);
     const [selectedEmployee, setSelectedEmployee] = useState({
         id: null,
@@ -45,6 +64,7 @@ const EmployeesList = () => {
         setLoading(true);
         const response = await GetAllEmployees();
         setEmployees(response.data);
+        setEmployeesFiltered(response.data);
         setLoading(false);
     };
 
@@ -102,38 +122,73 @@ const EmployeesList = () => {
             }
         }
     }
-            
+
 
     //Definition of our datatable columns
     const columnsTest = [
-        { field: 'id', headerName: 'ID', flex: 1},
-        { field: 'name', headerName: 'Name', flex: 1 },
+        { field: 'id', headerName: 'ID', headerClassName: 'employee-datagrid-header',  flex: 1,
+            cellClassName: (params) => {
+                return 'shared-datagrid-column';
+            }
+        },
+        { field: 'name', headerName: 'Name', headerClassName: 'employee-datagrid-header',  flex: 1,
+            cellClassName: (params) => {
+                return 'shared-datagrid-column';
+            }
+        },
         {
-            field: 'manager', headerName: 'Manager', flex: 1,
+            field: 'manager', headerName: 'Manager', headerClassName: 'employee-datagrid-header',  flex: 1,
             valueGetter: (params) => {
                 return params.row.manager != null ? params.row.manager.name : null;
+            },
+            //We want to apply the style to all cells without condition
+            cellClassName: (params) => {
+                return 'shared-datagrid-column manager-datagrid-column';
             }
         },
         {
-            field: 'hireDate', headerName: 'Hire Date', flex: 1,
+            field: 'hireDate', headerName: 'Hire Date', headerClassName: 'employee-datagrid-header',  flex: 1,
             valueFormatter: (params) => {
                 return params.value != null ? moment(params.value).format("DD/MM/YYYY") : null;
+            },
+            cellClassName: (params) => {
+                return 'shared-datagrid-column';
             }
         },
         {
-            field: 'department', headerName: 'Department', flex: 1,
+            field: 'department', headerName: 'Department', headerClassName: 'employee-datagrid-header',  flex: 1,
             valueGetter: (params) => {
                 return departments && departments.find(d => d.id === params.row.departmentId).name;
+            },
+            cellClassName: (params) => {
+                return 'shared-datagrid-column';
             }
         },
     ];
+
+    useEffect(() => {
+        //When search changes, we want to filter the employees list
+        if (search === '') {
+            setEmployeesFiltered(employees);
+        } else {
+            //Search should be on every field, except hire date
+            setEmployeesFiltered(employees.filter(e => e.name.toLowerCase().includes(search.toLowerCase())));
+        }
+    }, [search]);
 
     const renderEmployeesTable = (employees) => {
         return (
             <Grid container direction={"row"} alignItems={"center"} justifyContent={"center"} spacing={2}>
                 <Grid item xs={10}>
+                    {/*We want the search field and the add employee button to be on the same row and also to have the same height, search input will be align left and button align right*/}
+                    <Box sx={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: '1%' }}>
+                        <TextField id="outlined-basic" label="Search" variant="outlined" sx={{ background: 'white' }} onChange={(e) => setSearch(e.target.value)}/>
+                        <Button variant="contained" color="primary" onClick={() => handleNewEmployeeClick()} sx={{ marginBottom: '1%', textAlign: 'right' }}>
+                            Add new employee
+                        </Button>
+                    </Box>
                     <DataGrid
-                        sx={{background: 'white'}}
+                        sx={{background: 'white', minHeight: '80vh', width: '100%'}}
                         rows={employees}
                         columns={columnsTest}
                         onRowClick={handleRowClick}
@@ -277,7 +332,7 @@ const EmployeesList = () => {
         </Modal>
 
 
-    let errorAlert = 
+    let errorAlert =
         <Snackbar open={error !== null} autoHideDuration={6000} onClose={() => setError(null)}>
             <Alert severity="error" sx={{ width: '100%' }}>
                 {error}
@@ -293,8 +348,8 @@ const EmployeesList = () => {
 
 
     let contents = loading
-        ? <p><em>Loading... Please refresh once the ASP.NET backend has started. See <a href="https://aka.ms/jspsintegrationreact">https://aka.ms/jspsintegrationreact</a> for more details.</em></p>
-        : renderEmployeesTable(employees);
+        ? <CircularProgress />
+        : renderEmployeesTable(employeesFiltered);
 
     return (
 
@@ -302,9 +357,6 @@ const EmployeesList = () => {
             <h1 id="tabelLabel" >Employees List</h1>
             <p>This component demonstrates fetching data from the server.</p>
             {modalEditEmployee}
-            <Button variant="contained" color="primary" onClick={() => handleNewEmployeeClick()} sx={{marginBottom: '1%', textAlign: 'right'}}>
-                Add new employee
-            </Button>
             {contents}
             {errorAlert}
             {successAlert}
